@@ -1,16 +1,15 @@
 """시뮬레이션 한다"""
 import os
 import sys
-
-from qt.AnalyzeMean import *
-from qt.DataManager import *
+from datetime import datetime, timedelta
+from chap030.AnalyzeMean import *
+from chap030.DataManager import *
 from PyQt5.QtWidgets import *
 
 class MyMainWindow(QMainWindow):
     def __init__(self, parent=None):
         super(MyMainWindow, self).__init__(parent)
-        self.dm = DataManager()
-        self.form_widget = FormWidget(self, self.dm)
+        self.form_widget = FormWidget(self)
         self.setCentralWidget(self.form_widget)
         self.statusBar().showMessage('Ready')
 
@@ -20,7 +19,7 @@ class MyMainWindow(QMainWindow):
 
 class FormWidget(QWidget):
 
-    def __init__(self, parent, dm):
+    def __init__(self, parent):
         super(FormWidget, self).__init__(parent)
 
         self.gridLayout = QGridLayout(self)
@@ -71,29 +70,43 @@ class FormWidget(QWidget):
     def start_simulator(self):
         # 코드, 최대금액, 시작날짜 종료날짜, 시작
         # 코드 가져오기
+
+        #from datetime import datetime
+        #datetime_object = datetime.strptime('Jun 1 2005  1:33PM', '%b %d %Y %I:%M%p')
+
         code = self.editCode.text()
-        moneyMax = self.editMoneyMax.text()
-        startDate = self.dateStart.date()
-        endDate = self.dateEnd.date()
+        money_max = self.editMoneyMax.text()
+        start_datetime = self.get_datetime(self.dateStart.date())
+        end_datetime = self.get_datetime(self.dateEnd.date())
+
 
         # 데이터 가져오기
         item_list = []
         item_list.append({'code': code, 'name': '테스트대상'})
+        data_manager = DataManager(start_datetime, end_datetime)
+        data_manager.set_item_list(item_list)
+        stock_data = data_manager.get_stock_data(code)
 
         # 시작, 종료
-        data_manager = DataManager(startDate, endDate)
+        data_manager = DataManager(start_datetime, end_datetime)
         data_manager.set_item_list(item_list)
 
+        # 분석 모듈
         analyzeMean = AnalyzeMean()
-        targetDate = startDate
-        while targetDate < datetime:
-            # 날짜, 데이터, 살까, 팔까?
-            if analyzeMean.isWorthBuying(code, targetDate, stockData):
-            # 구입 최대금액 구하기
-            targetDate =targetDate.addDays(1)
+        targetDate = start_datetime
 
+        # while targetDate < datetime:
+        #     # 날짜, 데이터, 살까, 팔까?
+        #     if analyzeMean.isWorthBuying(code, targetDate, stock_data):
+        #     # 구입 최대금액 구하기
+        #     targetDate =targetDate.addDays(1)
 
-
+    def get_datetime(self, date):
+        year = self.dateStart.date().year()
+        month = self.dateStart.date().month()
+        day = self.dateStart.date().day()
+        dt = datetime(year=year, month=month, day=day)
+        return dt
 
 
 
