@@ -19,6 +19,7 @@ class MyMainWindow(QMainWindow):
 
 class FormWidget(QWidget):
 
+
     def __init__(self, parent):
         super(FormWidget, self).__init__(parent)
 
@@ -45,7 +46,7 @@ class FormWidget(QWidget):
         # 시작날짜
         self.dateStart = QDateEdit()
         self.gridLayout.addWidget(self.dateStart, self.add_row(), 0)
-        self.startDate = QDate(2010,1,2)
+        self.startDate = QDate(2017,3,1)
         self.dateStart.setDate(self.startDate)
 
         # 종료날짜
@@ -55,7 +56,12 @@ class FormWidget(QWidget):
         self.dateEnd.setDate(self.endDate)
 
         # 시작 버튼
-        self.btnStart = QPushButton("시작")
+        self.btnStart = QPushButton("데이터 가져오기")
+        self.btnStart.clicked.connect(self.get_stock_data)
+        self.gridLayout.addWidget(self.btnStart, self.add_row(), 0)
+
+        # 분석 버튼
+        self.btnStart = QPushButton("분석")
         self.btnStart.clicked.connect(self.start_simulator)
         self.gridLayout.addWidget(self.btnStart, self.add_row(), 0)
 
@@ -67,6 +73,22 @@ class FormWidget(QWidget):
         self.gridCol += 1
         return self.gridCol
 
+    def showEvent(self, QShowEvent):
+        """시작하면 데이터를 가져온다."""
+        self.get_stock_data()
+
+    def get_stock_data(self):
+        self.code = self.editCode.text()
+        self.money_max = self.editMoneyMax.text()
+        self.start_datetime = self.get_datetime(self.dateStart.date())
+        self.end_datetime = self.get_datetime(self.dateEnd.date())
+
+        # 데이터 가져오기
+        item_list = []
+        item_list.append({'code': self.code, 'name': '테스트대상'})
+        self.data_manager = DataManager(self.start_datetime, self.end_datetime)
+        self.data_manager.set_item_list(item_list)
+
     def start_simulator(self):
         # 코드, 최대금액, 시작날짜 종료날짜, 시작
         # 코드 가져오기
@@ -74,37 +96,29 @@ class FormWidget(QWidget):
         #from datetime import datetime
         #datetime_object = datetime.strptime('Jun 1 2005  1:33PM', '%b %d %Y %I:%M%p')
 
-        code = self.editCode.text()
-        money_max = self.editMoneyMax.text()
-        start_datetime = self.get_datetime(self.dateStart.date())
-        end_datetime = self.get_datetime(self.dateEnd.date())
-
-
-        # 데이터 가져오기
-        item_list = []
-        item_list.append({'code': code, 'name': '테스트대상'})
-        data_manager = DataManager(start_datetime, end_datetime)
-        data_manager.set_item_list(item_list)
-        stock_data = data_manager.get_stock_data(code)
-
-        # 시작, 종료
-        data_manager = DataManager(start_datetime, end_datetime)
-        data_manager.set_item_list(item_list)
+        stock_data = self.data_manager.get_stock_data(self.code)
 
         # 분석 모듈
-        analyzeMean = AnalyzeMean()
-        targetDate = start_datetime
+        analyze_mean = AnalyzeMean(stock_data)
+        target_date = self.start_datetime
 
-        # while targetDate < datetime:
-        #     # 날짜, 데이터, 살까, 팔까?
-        #     if analyzeMean.isWorthBuying(code, targetDate, stock_data):
-        #     # 구입 최대금액 구하기
-        #     targetDate =targetDate.addDays(1)
+        while target_date < self.end_datetime:
+            # 오늘 몇일
+            # print(target_date)
+            rst = analyze_mean.is_worth_buying(target_date)
+            print(target_date, ":", rst)
 
-    def get_datetime(self, date):
-        year = self.dateStart.date().year()
-        month = self.dateStart.date().month()
-        day = self.dateStart.date().day()
+            # 날짜, 데이터, 살까, 팔까?
+            # if analyze_mean.is_worth_buying(target_date):
+            #     pass
+            # 구입 최대금액 구하기
+            target_date = target_date + timedelta(days=1)
+
+    @staticmethod
+    def get_datetime(date):
+        year = date.year()
+        month = date.month()
+        day = date.day()
         dt = datetime(year=year, month=month, day=day)
         return dt
 

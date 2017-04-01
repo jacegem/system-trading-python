@@ -23,9 +23,11 @@ class Worker(QRunnable):
         self.item = item
         self.signals = WorkerSignals()
         self.data_source = 'yahoo'
-        self.today = datetime.today()
-        self.start_day = self.today - timedelta(days=200)
+        # self.today = datetime.today()
+        # self.start_day = self.today - timedelta(days=200)
         self.parent = parent
+        self.start_date = parent.start_date
+        self.end_date = parent.end_date
 
     def run(self):
         print('Sending', self.item)
@@ -46,7 +48,7 @@ class Worker(QRunnable):
             return None
 
         try:
-            df = data.DataReader(symbol, self.data_source, self.start_day)
+            df = data.DataReader(symbol, self.data_source, self.start_date, self.end_date)
         except:
             print("Unexpected error:", sys.exc_info()[0])
             return None
@@ -72,12 +74,15 @@ class Worker(QRunnable):
         return df
 
 class Tasks(QObject):
-    def __init__(self, item_list):
+    def __init__(self, item_list, start_date, end_date):
         super(Tasks, self).__init__()
         self.pool = QThreadPool.globalInstance()
         self.pool.setMaxThreadCount(4)
         self.item_list = item_list
         self.stock_datas = {}
+        self.start_date = start_date
+        self.end_date = end_date
+
 
     def process_result(self, result_dict):
         print('Receiving', result_dict)
