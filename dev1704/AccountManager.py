@@ -6,7 +6,7 @@ class AccountManager():
         self.data_manager = data_manager
         self.max_stock = int(max_stock)
         self.hold_stock = {} # 내가 보유하고 있는 자신 {code, stock_price}
-        self.cash = 10000000
+        self.cash = 1000000
         self.rate = 0.99
 
     def get_buy_quantity(self, code, date):
@@ -42,10 +42,11 @@ class AccountManager():
         else:
             stock_price = 0
 
-        self.cash += stock_price * self.rate
+        sell_price = int(stock_price * self.rate)
+        self.cash += sell_price
         self.hold_stock[code] = 0
 
-        return stock_price * self.rate
+        return sell_price
 
     def get_stock_price(self, code):
         """보유주 금액을 반환한다"""
