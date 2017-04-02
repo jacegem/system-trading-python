@@ -38,8 +38,8 @@ class AnalyzeBasic():
         self.idx = self.df.index.get_loc(date_str)
 
         # 전날 보다 떨어졌으면 판다.
-        adj_close_today = self.df.ix[self.idx]
-        adj_close_last = self.df.ix[self.idx - 1]
+        adj_close_today = self.df.ix[self.idx][AnalyzeBasic.ADJ_CLOSE]
+        adj_close_last = self.df.ix[self.idx - 1][AnalyzeBasic.ADJ_CLOSE]
 
         if adj_close_today < adj_close_last:
             return True

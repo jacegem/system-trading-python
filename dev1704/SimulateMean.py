@@ -48,7 +48,7 @@ class FormWidget(QWidget):
         # 시작날짜
         self.dateStart = QDateEdit()
         self.gridLayout.addWidget(self.dateStart, self.add_row(), 0)
-        self.startDate = QDate(2017,2,1)
+        self.startDate = QDate(2017,1,1)
         self.dateStart.setDate(self.startDate)
 
         # 종료날짜
@@ -70,6 +70,7 @@ class FormWidget(QWidget):
         # 결과 창
         self.logOutput = QTextEdit(parent)
         self.logOutput.setReadOnly(True)
+        self.logOutput.setFixedWidth(800)
         self.logOutput.setLineWrapMode(QTextEdit.NoWrap)
         self.gridLayout.addWidget(self.logOutput, self.init_row(), self.add_col(), 6, 1)
 
@@ -120,6 +121,9 @@ class FormWidget(QWidget):
         self.account_manager = AccountManager(money_max, self.data_manager)
 
     def start_simulator(self):
+        # 로그 지우기
+        self.logOutput.clear()
+
         # 코드, 최대금액, 시작날짜 종료날짜, 시작
         # 코드 가져오기
         stock_data = self.data_manager.get_stock_data(self.code)
@@ -132,25 +136,30 @@ class FormWidget(QWidget):
         while target_date < self.end_datetime:
             # 오늘 몇일
             time_str = target_date.strftime("%Y-%m-%d")
+
             # 데이터가 있는가?
             if analyzer.has_data(target_date):
-                rst = analyzer.is_worth_buying(target_date)
-                self.add_log(time_str + ":" + str(rst))
-                # 얼마나 살수 있는가? # 최대 구매 금액 # 보유주 (수 + 량)
-                quantity = self.account_manager.get_buy_quantity(self.code, target_date)
-                price = self.data_manager.get_adj_close(self.code, target_date)
-                self.account_manager.buy(self.code, price, quantity)
-                # code, '구매', 가격, 수량, 보유주평가금액, 현금
-                stock_price = self.account_manager.get_stock_price(self.code)
-                cash = self.account_manager.get_cash()
-                text = '{} : 구매 / 가격 : {} / 수량 : {} / 평가금 : {} / 현금 : {}'.format(self.code, price, quantity, stock_price, cash)
-                self.add_log(text)
+                adj_close = self.data_manager.get_adj_close(self.code, target_date)
+
+                # 팔아야 할까?
+                if analyzer.should_i_sell(target_date):
+                    sell_price = self.account_manager.sell(self.code)
+                    cash = self.account_manager.get_cash()
+                    text = '{} : {} / 판매 / 판매금 : {} / 현금 : {}'.format(time_str, adj_close, sell_price, cash)
+                    self.add_log(text)
+
+                if analyzer.is_worth_buying(target_date):
+                    # 얼마나 살수 있는가? # 최대 구매 금액 # 보유주 (수 + 량)
+                    quantity = self.account_manager.get_buy_quantity(self.code, target_date)
+                    self.account_manager.buy(self.code, adj_close, quantity)
+                    # code, '구매', 가격, 수량, 보유주평가금액, 현금
+                    stock_price = self.account_manager.get_stock_price(self.code)
+                    cash = self.account_manager.get_cash()
+                    text = '{} : {} / 구매 / 수량 : {} / 평가금 : {} / 현금 : {} / 합 : {}'.format(time_str, adj_close, quantity, stock_price, cash, stock_price + cash)
+                    self.add_log(text)
             else:
-                self.add_log(time_str + ":" + "데이터 없음")
-            # 날짜, 데이터, 살까, 팔까?
-            # if analyzer.is_worth_buying(target_date):
-            #     pass
-            # 구입 최대금액 구하기
+                self.add_log(time_str + " : " + "데이터 없음")
+
             target_date = target_date + timedelta(days=1)
 
     @staticmethod
