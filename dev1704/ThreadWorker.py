@@ -10,7 +10,7 @@ from pandas_datareader import data, wb
 from multiprocessing import Pool
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
-from chap030.StockData import StockData
+from dev1704.StockData import StockData
 
 
 class WorkerSignals(QObject):

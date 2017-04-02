@@ -2,8 +2,8 @@
 import os
 import sys
 from datetime import datetime, timedelta
-from chap030.AnalyzeMean import *
-from chap030.DataManager import *
+from dev1704.AnalyzeMean import *
+from dev1704.DataManager import *
 from PyQt5.QtWidgets import *
 
 class MyMainWindow(QMainWindow):
@@ -36,7 +36,7 @@ class FormWidget(QWidget):
         # 대상 (코드)
         self.editCode = QLineEdit()
         self.gridLayout.addWidget(self.editCode, self.add_row(), 0)
-        self.editCode.setText('A018670')
+        self.editCode.setText('A023350')
 
         # 대상 (코드)
         self.editMoneyMax = QLineEdit()
@@ -46,7 +46,7 @@ class FormWidget(QWidget):
         # 시작날짜
         self.dateStart = QDateEdit()
         self.gridLayout.addWidget(self.dateStart, self.add_row(), 0)
-        self.startDate = QDate(2017,3,1)
+        self.startDate = QDate(2017,2,1)
         self.dateStart.setDate(self.startDate)
 
         # 종료날짜
@@ -65,13 +65,32 @@ class FormWidget(QWidget):
         self.btnStart.clicked.connect(self.start_simulator)
         self.gridLayout.addWidget(self.btnStart, self.add_row(), 0)
 
+        # 분석 버튼
+        self.btnStart = QPushButton("분석")
+        self.btnStart.clicked.connect(self.start_simulator)
+        self.gridLayout.addWidget(self.btnStart, self.add_row(), 0)
+
+        # 결과 창
+        self.btnStart = QPushButton("분석")
+        self.btnStart.clicked.connect(self.start_simulator)
+        self.gridLayout.addWidget(self.btnStart, self.add_row(), 0)
+
     def add_row(self):
         self.gridRow += 1
+        return self.gridRow
+
+    def init_row(self):
+        self.gridRow = 0
         return self.gridRow
 
     def add_col(self):
         self.gridCol += 1
         return self.gridCol
+
+    def init_col(self):
+        self.gridCol = 0
+        return self.gridCol
+
 
     def showEvent(self, QShowEvent):
         """시작하면 데이터를 가져온다."""
@@ -92,10 +111,6 @@ class FormWidget(QWidget):
     def start_simulator(self):
         # 코드, 최대금액, 시작날짜 종료날짜, 시작
         # 코드 가져오기
-
-        #from datetime import datetime
-        #datetime_object = datetime.strptime('Jun 1 2005  1:33PM', '%b %d %Y %I:%M%p')
-
         stock_data = self.data_manager.get_stock_data(self.code)
 
         # 분석 모듈
@@ -105,9 +120,12 @@ class FormWidget(QWidget):
         while target_date < self.end_datetime:
             # 오늘 몇일
             # print(target_date)
-            rst = analyze_mean.is_worth_buying(target_date)
-            print(target_date, ":", rst)
-
+            # 데이터가 있는가?
+            if analyze_mean.has_data(target_date):
+                rst = analyze_mean.is_worth_buying(target_date)
+                print(target_date, ":", rst)
+            else:
+                print(target_date, ":", "데이터 없음")
             # 날짜, 데이터, 살까, 팔까?
             # if analyze_mean.is_worth_buying(target_date):
             #     pass
