@@ -4,7 +4,7 @@ class AnalyzeBasic():
     ADJ_CLOSE = 'Adj Close'
 
     def __init__(self, stock_data):
-        """이평선을 기준으로 구매 대상을 분석합니다"""
+        """예제 전략"""
         self.stock_data = stock_data
         self.df = self.stock_data.get_df()
         self.idx = 0
