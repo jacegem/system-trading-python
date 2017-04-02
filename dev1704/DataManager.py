@@ -34,3 +34,7 @@ class DataManager:
     def get_stock_data(self, code):
         """단일코드 종목에 대한 데이터 반환"""
         return self.stock_datas[code]
+
+    def get_adj_close(self, code, date):
+        date_str = date.strftime('%Y-%m-%d')
+        return self.stock_datas[code].get_df().loc[date_str]['Adj Close']

@@ -1,5 +1,11 @@
 # system-trading-python
 
+## 할일
+
+- 슬랙 연동
+- firebase 연동
+
+
 ## 주가 확인
 
 - http://finance.daum.net/item/chart.daum?code=023350

@@ -3,6 +3,8 @@ import os
 import sys
 from datetime import datetime, timedelta
 from dev1704.AnalyzeMean import *
+from dev1704.AnalyzeBasic import *
+from dev1704.AccountManager import *
 from dev1704.DataManager import *
 from PyQt5.QtWidgets import *
 
@@ -38,7 +40,7 @@ class FormWidget(QWidget):
         self.gridLayout.addWidget(self.editCode, self.add_row(), 0)
         self.editCode.setText('A023350')
 
-        # 대상 (코드)
+        # 투자 최대 금액
         self.editMoneyMax = QLineEdit()
         self.gridLayout.addWidget(self.editMoneyMax, self.add_row(), 0)
         self.editMoneyMax.setText('1000000')
@@ -65,22 +67,28 @@ class FormWidget(QWidget):
         self.btnStart.clicked.connect(self.start_simulator)
         self.gridLayout.addWidget(self.btnStart, self.add_row(), 0)
 
-        # 분석 버튼
-        self.btnStart = QPushButton("분석")
-        self.btnStart.clicked.connect(self.start_simulator)
-        self.gridLayout.addWidget(self.btnStart, self.add_row(), 0)
-
         # 결과 창
-        self.btnStart = QPushButton("분석")
-        self.btnStart.clicked.connect(self.start_simulator)
-        self.gridLayout.addWidget(self.btnStart, self.add_row(), 0)
+        self.logOutput = QTextEdit(parent)
+        self.logOutput.setReadOnly(True)
+        self.logOutput.setLineWrapMode(QTextEdit.NoWrap)
+        self.gridLayout.addWidget(self.logOutput, self.init_row(), self.add_col(), 6, 1)
+
+    def add_log(self, text):
+        """참고: http://stackoverflow.com/questions/16568451/pyqt-how-to-make-a-textarea-to-write-messages-to-kinda-like-printing-to-a-co"""
+        print(text)
+        self.logOutput.moveCursor(QTextCursor.End)
+        # self.logOutput.setCurrentFont(font)
+        # self.logOutput.setTextColor(color)
+        self.logOutput.insertPlainText(text + "\n")
+        sb = self.logOutput.verticalScrollBar()
+        sb.setValue(sb.maximum())
 
     def add_row(self):
         self.gridRow += 1
         return self.gridRow
 
     def init_row(self):
-        self.gridRow = 0
+        self.gridRow = 1
         return self.gridRow
 
     def add_col(self):
@@ -88,7 +96,7 @@ class FormWidget(QWidget):
         return self.gridCol
 
     def init_col(self):
-        self.gridCol = 0
+        self.gridCol = 1
         return self.gridCol
 
 
@@ -98,7 +106,7 @@ class FormWidget(QWidget):
 
     def get_stock_data(self):
         self.code = self.editCode.text()
-        self.money_max = self.editMoneyMax.text()
+        money_max = self.editMoneyMax.text()
         self.start_datetime = self.get_datetime(self.dateStart.date())
         self.end_datetime = self.get_datetime(self.dateEnd.date())
 
@@ -108,26 +116,39 @@ class FormWidget(QWidget):
         self.data_manager = DataManager(self.start_datetime, self.end_datetime)
         self.data_manager.set_item_list(item_list)
 
+        # 계정 관리자
+        self.account_manager = AccountManager(money_max, self.data_manager)
+
     def start_simulator(self):
         # 코드, 최대금액, 시작날짜 종료날짜, 시작
         # 코드 가져오기
         stock_data = self.data_manager.get_stock_data(self.code)
 
         # 분석 모듈
-        analyze_mean = AnalyzeMean(stock_data)
+        # analyzer = AnalyzeMean(stock_data)
+        analyzer = AnalyzeBasic(stock_data)
         target_date = self.start_datetime
 
         while target_date < self.end_datetime:
             # 오늘 몇일
-            # print(target_date)
+            time_str = target_date.strftime("%Y-%m-%d")
             # 데이터가 있는가?
-            if analyze_mean.has_data(target_date):
-                rst = analyze_mean.is_worth_buying(target_date)
-                print(target_date, ":", rst)
+            if analyzer.has_data(target_date):
+                rst = analyzer.is_worth_buying(target_date)
+                self.add_log(time_str + ":" + str(rst))
+                # 얼마나 살수 있는가? # 최대 구매 금액 # 보유주 (수 + 량)
+                quantity = self.account_manager.get_buy_quantity(self.code, target_date)
+                price = self.data_manager.get_adj_close(self.code, target_date)
+                self.account_manager.buy(self.code, price, quantity)
+                # code, '구매', 가격, 수량, 보유주평가금액, 현금
+                stock_price = self.account_manager.get_stock_price(self.code)
+                cash = self.account_manager.get_cash()
+                text = '{} : 구매 / 가격 : {} / 수량 : {} / 평가금 : {} / 현금 : {}'.format(self.code, price, quantity, stock_price, cash)
+                self.add_log(text)
             else:
-                print(target_date, ":", "데이터 없음")
+                self.add_log(time_str + ":" + "데이터 없음")
             # 날짜, 데이터, 살까, 팔까?
-            # if analyze_mean.is_worth_buying(target_date):
+            # if analyzer.is_worth_buying(target_date):
             #     pass
             # 구입 최대금액 구하기
             target_date = target_date + timedelta(days=1)
