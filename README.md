@@ -1,5 +1,11 @@
 # system-trading-python
 
+## tensorflow
+
+- https://www.tensorflow.org/versions/r0.10/tutorials/
+
+
+
 ## 시뮬레이션 테스트
 
 
