@@ -3,6 +3,8 @@
 ## tensorflow
 
 - https://www.tensorflow.org/versions/r0.10/tutorials/
+- https://github.com/aymericdamien/TensorFlow-Examples
+- https://gist.github.com/haje01/202ac276bace4b25dd3f
 
 
 
